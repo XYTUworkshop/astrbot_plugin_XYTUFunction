@@ -16,5 +16,7 @@
 
 # XYTU
 
-- [官网](https://www.xytuws.cn)  
+- [XYTUworkshop官网](https://www.xytuws.cn)  
+- [SLserver官网](https://www.slimeserver.top)
 - [Tangzixy](https://tangzixy.top)  
+- [Slime](slimeserver.top)
