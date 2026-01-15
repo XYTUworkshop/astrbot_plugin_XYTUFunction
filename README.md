@@ -1,9 +1,7 @@
-# helloworld
+# XYTU Functional | astrbot插件
 
-AstrBot 插件模板
+目前这个插件还在开发 请勿安装
 
-A template plugin for AstrBot plugin feature
+# XYTU
 
-# 支持
-
-- [插件开发文档](https://docs.astrbot.app/dev/star/plugin-new.html)
+- [官网](https://www.xytuws.cn)
