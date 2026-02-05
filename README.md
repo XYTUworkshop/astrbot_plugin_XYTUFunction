@@ -3,18 +3,22 @@
 为使用Astrbot的友友们提供All In Boom(不是)  
 的基础功能性插件  
 
+# 支持库
+psutil>=5.9.0  
+py-cpuinfo>=9.0.0  
+
 # 功能列表
 
-目前这个插件还在开发 请勿安装
+目前这个插件还在开发  
 
-状态 (未来)  
-撤回防回复 (未来)  
-赞我 (未来)  
-今日人品 (未来)  
-用户画像 (未来)  
-抽象回复 (未来)  
+状态 (0.1.0 已完成)  
 
-# XYTU
+未来规划
+
+撤回防回复  
+赞我  
+
+# XYTU & 相关作者
 
 - [XYTUworkshop官网](https://www.xytuws.cn)  
 - [SLserver官网](https://www.slimeserver.top)  
