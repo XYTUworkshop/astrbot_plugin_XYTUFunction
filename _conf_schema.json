@@ -1,0 +1,14 @@
+{
+  "status_enabled": {
+    "description": "状态功能开关",
+    "type": "bool",
+    "default": false,
+    "hint": "是否允许用户请求状态信息"
+  },
+  "status_trigger_words": {
+    "description": "状态功能触发词",
+    "type": "list",
+    "default": ["状态", "status"],
+    "hint": "用户发送这些词时触发状态回复 无需包含唤醒词"
+  }
+}
