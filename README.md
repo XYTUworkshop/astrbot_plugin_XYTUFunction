@@ -1,4 +1,4 @@
-# XYTUbot Function | astrbot插件
+# XYTUbot Function | astrbot插件 | XYTU功能集  
 功能性Astrbot插件？ 一个就够！  
 为使用Astrbot的友友们提供All In Boom(不是)  
 的基础功能性插件  
