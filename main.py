@@ -11,13 +11,15 @@ import re
 import subprocess
 from typing import List
 
-@register("astrbot_plugin_XYTUFunction", "Tangzixy , Slime , SLserver , XYTUworkshop", "Astrbot基础功能插件？ 一个就够了！", "v0.1.0", "https://github.com/XYTUworkshop/astrbot_plugin_XYTUFunction")
+@register("astrbot_plugin_XYTUFunction", "Tangzixy , Slime , SLserver , XYTUworkshop", "Astrbot基础功能插件？ 一个就够了！", "v0.2.5", "https://github.com/XYTUworkshop/astrbot_plugin_XYTUFunction")
 class XYTUFunctionPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
         self.config = config
         logger.info("XYTUFunction 插件初始化")
         
+    # ============== 状态功能相关方法 ==============
+    
     def _get_cpu_model(self) -> str:
         """获取CPU型号 - 使用多种方法确保准确性"""
         cpu_model = "未知"
@@ -251,9 +253,88 @@ class XYTUFunctionPlugin(Star):
         
         return disk_info
     
+    # ============== 赞我功能相关方法 ==============
+    
+    async def _send_like(self, event: AstrMessageEvent) -> bool:
+        """
+        给用户点赞
+        返回: True表示成功，False表示失败
+        """
+        try:
+            # 获取平台类型
+            platform_name = event.get_platform_name()
+            
+            # 目前只支持QQ平台（aiocqhttp）的点赞功能
+            if platform_name != "aiocqhttp":
+                logger.warning(f"赞我功能不支持平台: {platform_name}")
+                return False
+            
+            # 获取用户ID
+            user_id = event.get_sender_id()
+            if not user_id:
+                logger.error("无法获取用户ID")
+                return False
+            
+            # 导入QQ消息事件类型
+            from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import AiocqhttpMessageEvent
+            
+            # 检查事件类型
+            if not isinstance(event, AiocqhttpMessageEvent):
+                logger.error("事件类型不是AiocqhttpMessageEvent")
+                return False
+            
+            # 获取客户端
+            client = event.bot
+            if not client:
+                logger.error("无法获取QQ客户端")
+                return False
+            
+            # 调用点赞API
+            payloads = {
+                "user_id": int(user_id),
+                "times": 10  # 点10个赞
+            }
+            
+            # 调用API
+            ret = await client.api.call_action('send_like', **payloads)
+            
+            # 检查返回结果
+            if ret is None:
+                logger.info(f"点赞API返回None，可能表示成功（用户ID: {user_id}）")
+                return True
+            
+            # 检查返回状态
+            if isinstance(ret, dict):
+                if ret.get('status') == 'ok' or ret.get('retcode') == 0:
+                    logger.info(f"成功给用户 {user_id} 点了10个赞")
+                    return True
+                else:
+                    logger.error(f"点赞失败: {ret}")
+                    # 停止事件传播，防止AstrBot Core发送默认错误回复
+                    event.stop_event()
+                    return False
+            else:
+                # 有些协议端可能返回简单值（如True）
+                logger.info(f"点赞API返回: {ret}，视为成功")
+                return True
+                
+        except Exception as e:
+            # 捕获所有异常
+            error_msg = str(e)
+            logger.error(f"调用点赞API失败: {error_msg}")
+            
+            # 根据错误信息判断是否达到上限
+            if "已达上限" in error_msg or "点赞失败" in error_msg:
+                # 停止事件传播，防止AstrBot Core发送默认错误回复
+                event.stop_event()
+            
+            return False
+    
+    # ============== 消息处理函数 ==============
+    
     @filter.event_message_type(filter.EventMessageType.ALL)
-    async def on_message(self, event: AstrMessageEvent):
-        """监听所有消息"""
+    async def on_message_status(self, event: AstrMessageEvent):
+        """处理状态请求"""
         try:
             # 获取配置
             config = self.config
@@ -293,7 +374,7 @@ class XYTUFunctionPlugin(Star):
             disk_info = self._get_disk_info()
             
             # 构建回复消息
-            response = f"{greeting}好呀 {username}  随时待命\n"
+            response = f"{greeting}好呀{username} 随时待命\n"
             response += "当前状态：\n"
             response += " CPU\n"
             response += f"   {cpu_model} | {cpu_percent}\n"
@@ -314,6 +395,59 @@ class XYTUFunctionPlugin(Star):
             # 发送简单的错误提示
             try:
                 yield event.plain_result("获取状态信息时出现错误，请检查插件配置和依赖。")
+            except:
+                pass
+    
+    @filter.event_message_type(filter.EventMessageType.ALL)
+    async def on_message_like(self, event: AstrMessageEvent):
+        """处理点赞请求"""
+        try:
+            # 获取配置
+            config = self.config
+            
+            # 检查功能是否启用
+            if not config.get("like_enabled", False):
+                return
+            
+            # 获取触发词列表
+            trigger_words = config.get("like_trigger_words", ["赞我", "点赞"])
+            if not trigger_words:
+                trigger_words = ["赞我", "点赞"]
+            
+            # 检查消息是否匹配触发词
+            message_str = event.message_str.strip().lower()
+            
+            # 将触发词也转换为小写进行比较
+            found_trigger = False
+            for word in trigger_words:
+                if word.lower() in message_str:
+                    found_trigger = True
+                    break
+            
+            if not found_trigger:
+                return
+            
+            # 获取发送者用户名
+            username = event.get_sender_name()
+            
+            # 尝试点赞
+            success = await self._send_like(event)
+            
+            # 根据结果发送回复
+            if success:
+                response = f"给你点了10个赞 记得回我哦{username}"
+            else:
+                response = f"呀 怎么失败了{username} 明天再来罢"
+            
+            # 发送回复
+            yield event.plain_result(response)
+            
+        except Exception as e:
+            logger.error(f"处理点赞请求失败: {e}")
+            # 发送简单的错误提示
+            try:
+                username = event.get_sender_name()
+                yield event.plain_result(f"点赞过程中出现错误{username}")
             except:
                 pass
     
