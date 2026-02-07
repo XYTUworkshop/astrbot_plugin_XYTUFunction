@@ -18,14 +18,14 @@ class XYTUFunctionPlugin(Star):
         self.config = config
         logger.info("XYTUFunction 插件初始化")
         
-    # ============== 状态功能相关方法 ==============
+    # ========================================== 状态 ==========================================
     
     def _get_cpu_model(self) -> str:
         """获取CPU型号 - 使用多种方法确保准确性"""
         cpu_model = "未知"
         
         try:
-            # 方法1: 使用 cpuinfo 库 (最准确)
+            # cpuinfo 库
             try:
                 import cpuinfo
                 cpu_info = cpuinfo.get_cpu_info()
@@ -36,11 +36,11 @@ class XYTUFunctionPlugin(Star):
                 logger.warning("cpuinfo 库未安装，使用其他方法获取CPU型号")
                 pass
                 
-            # 方法2: 根据操作系统使用系统命令
+            # 系统命令 备用 1
             system_name = platform.system()
             
             if system_name == "Windows":
-                # Windows系统
+                # Windows
                 try:
                     import winreg
                     key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\CentralProcessor\0")
@@ -48,7 +48,7 @@ class XYTUFunctionPlugin(Star):
                     cpu_model = cpu_model.strip()
                     winreg.CloseKey(key)
                 except:
-                    # 备用方法: 使用 wmic 命令
+                    #  wmic 命令 备用 2
                     try:
                         result = subprocess.run(
                             ["wmic", "cpu", "get", "name"],
@@ -65,7 +65,7 @@ class XYTUFunctionPlugin(Star):
                         pass
             
             elif system_name == "Linux":
-                # Linux系统
+                # Linux
                 try:
                     with open("/proc/cpuinfo", "r", encoding='utf-8', errors='ignore') as f:
                         for line in f:
@@ -73,7 +73,7 @@ class XYTUFunctionPlugin(Star):
                                 cpu_model = line.split(":")[1].strip()
                                 break
                 except:
-                    # 备用方法: 使用 lscpu 命令
+                    # lscpu 命令 备用 1
                     try:
                         result = subprocess.run(
                             ["lscpu"],
@@ -90,7 +90,8 @@ class XYTUFunctionPlugin(Star):
                     except:
                         pass
             
-            elif system_name == "Darwin":  # macOS
+            elif system_name == "Darwin":  
+                # macOS
                 try:
                     result = subprocess.run(
                         ["sysctl", "-n", "machdep.cpu.brand_string"],
@@ -104,11 +105,11 @@ class XYTUFunctionPlugin(Star):
                 except:
                     pass
             
-            # 如果以上方法都失败，使用 platform 库的备用方法
+            # platform 最终备用
             if cpu_model == "未知" or "Family" in cpu_model or "Model" in cpu_model:
                 cpu_model = platform.processor()
                 
-            # 清理型号字符串，移除多余的空格
+            # 移除多余空格
             cpu_model = ' '.join(cpu_model.split())
             
         except Exception as e:
@@ -120,17 +121,17 @@ class XYTUFunctionPlugin(Star):
     def _get_cpu_info(self) -> tuple:
         """获取CPU信息"""
         try:
-            # 获取CPU型号
+            # CPU型号
             cpu_model = self._get_cpu_model()
             
-            # 获取CPU占用率
+            # CPU占用率
             cpu_percent = psutil.cpu_percent(interval=0.5)
             
-            # 清理CPU型号字符串，移除括号中的冗余信息
+            # 移除冗余信息
             if "(" in cpu_model and ")" in cpu_model:
                 cpu_model = re.sub(r'\([^)]*\)', '', cpu_model).strip()
             
-            # 移除"CPU"、"Processor"等常见冗余词
+            # 移除常见冗余词
             redundant_words = ["CPU", "Processor", "processor", "@", "(R)", "(TM)", "  "]
             for word in redundant_words:
                 cpu_model = cpu_model.replace(word, "").strip()
@@ -163,7 +164,7 @@ class XYTUFunctionPlugin(Star):
         """获取内存信息"""
         try:
             memory = psutil.virtual_memory()
-            # 转换为GB
+            # 转为GB
             total_gb = memory.total / (1024 ** 3)
             used_gb = memory.used / (1024 ** 3)
             percent = memory.percent
@@ -185,15 +186,15 @@ class XYTUFunctionPlugin(Star):
                     release_id = winreg.QueryValueEx(key, "ReleaseId")[0] if "ReleaseId" in [winreg.EnumValue(key, i)[0] for i in range(winreg.QueryInfoKey(key)[1])] else ""
                     winreg.CloseKey(key)
                     
-                    # 移除版本号中的括号内容
+                    # 移除括号内容
                     if "(" in product_name and ")" in product_name:
                         product_name = re.sub(r'\s*\([^)]*\)', '', product_name)
                     
                     system_info = f"Windows {product_name}"
-                    # 不再添加 release_id
+                    # 移除release_id
                 except:
                     system_info = f"{platform.system()} {platform.release()}"
-                    # 同样处理可能存在的括号
+                    # 处理可能存在的括号
                     system_info = re.sub(r'\s*\([^)]*\)', '', system_info)
             else:
                 system_info = f"{platform.system()} {platform.release()}"
@@ -203,7 +204,7 @@ class XYTUFunctionPlugin(Star):
             now = time.time()
             uptime_seconds = now - boot_time
             
-            # 转换为易读格式
+            # 转换格式
             uptime_days = int(uptime_seconds // (24 * 3600))
             uptime_hours = int((uptime_seconds % (24 * 3600)) // 3600)
             uptime_minutes = int((uptime_seconds % 3600) // 60)
@@ -225,7 +226,7 @@ class XYTUFunctionPlugin(Star):
             partitions = psutil.disk_partitions(all=False)
             for partition in partitions:
                 try:
-                    # 跳过CD-ROM等只读设备
+                    # 跳过只读设备
                     if 'cdrom' in partition.opts or partition.fstype == '':
                         continue
                     
@@ -234,13 +235,13 @@ class XYTUFunctionPlugin(Star):
                     used_gb = usage.used / (1024 ** 3)
                     percent = usage.percent
                     
-                    # 获取设备名称
+                    # 设备名称
                     device = partition.device
-                    # 如果是Windows，显示盘符
+                    # Windows显示盘符
                     if platform.system() == "Windows":
                         device = partition.device
                     elif platform.system() == "Linux":
-                        # Linux下只显示设备名，不显示挂载点
+                        # Linux显示设备名 不显示挂载点
                         device = os.path.basename(partition.device)
                     
                     disk_info.append(f"   {device}: {used_gb:.1f}G/{total_gb:.1f}G | {percent:.1f}%")
@@ -253,7 +254,7 @@ class XYTUFunctionPlugin(Star):
         
         return disk_info
     
-    # ============== 赞我功能相关方法 ==============
+    # ========================================== 赞我 ==========================================
     
     async def _send_like(self, event: AstrMessageEvent) -> bool:
         """
@@ -264,12 +265,12 @@ class XYTUFunctionPlugin(Star):
             # 获取平台类型
             platform_name = event.get_platform_name()
             
-            # 目前只支持QQ平台（aiocqhttp）的点赞功能
+            # 只支持QQ平台
             if platform_name != "aiocqhttp":
                 logger.warning(f"赞我功能不支持平台: {platform_name}")
                 return False
             
-            # 获取用户ID
+            # 用户ID
             user_id = event.get_sender_id()
             if not user_id:
                 logger.error("无法获取用户ID")
@@ -310,11 +311,11 @@ class XYTUFunctionPlugin(Star):
                     return True
                 else:
                     logger.error(f"点赞失败: {ret}")
-                    # 停止事件传播，防止AstrBot Core发送默认错误回复
+                    # 停止事件传播 防止发送默认错误
                     event.stop_event()
                     return False
             else:
-                # 有些协议端可能返回简单值（如True）
+                # 有些协议端可能返回True
                 logger.info(f"点赞API返回: {ret}，视为成功")
                 return True
                 
