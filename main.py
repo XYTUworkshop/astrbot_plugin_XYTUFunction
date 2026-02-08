@@ -11,12 +11,42 @@ import re
 import subprocess
 from typing import List
 
-@register("astrbot_plugin_XYTUFunction", "Tangzixy , Slime , SLserver , XYTUworkshop", "Astrbot基础功能插件？ 一个就够了！", "v0.2.5", "https://github.com/XYTUworkshop/astrbot_plugin_XYTUFunction")
+@register("astrbot_plugin_XYTUFunction", "Tangzixy , Slime , SLserver , XYTUworkshop", "Astrbot基础功能插件？ 一个就够了！", "v0.3.1", "https://github.com/XYTUworkshop/astrbot_plugin_XYTUFunction")
 class XYTUFunctionPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
         self.config = config
         logger.info("XYTUFunction 插件初始化")
+        
+    def _check_trigger(self, event: AstrMessageEvent, trigger_words: List[str]) -> str:
+        """
+        检查是否触发功能
+        Args:
+            event: 消息事件
+            trigger_words: 触发词列表
+        Returns:
+            str: 如果触发返回触发词，否则返回空字符串
+        """
+        # 获取消息文本
+        message_str = event.message_str.strip()
+        
+        # 获取配置的唤醒词
+        wake_word = self.config.get("wake_word", "XYTU")
+        
+        # 检查消息是否以唤醒词开头
+        if not message_str.startswith(wake_word):
+            return ""
+        
+        # 支持唤醒词后跟空格的情况
+        remaining = message_str[len(wake_word):].strip()
+        
+        # 检查剩余部分是否完全匹配某个触发词
+        for word in trigger_words:
+            if remaining.lower() == word.lower():
+                return word
+        
+        # 如果没有匹配的触发词
+        return ""
         
     # ========================================== 状态 ==========================================
     
@@ -349,17 +379,9 @@ class XYTUFunctionPlugin(Star):
             if not trigger_words:
                 trigger_words = ["状态", "status"]
             
-            # 检查消息是否匹配触发词
-            message_str = event.message_str.strip().lower()
-            
-            # 将触发词也转换为小写进行比较
-            found_trigger = False
-            for word in trigger_words:
-                if word.lower() in message_str:
-                    found_trigger = True
-                    break
-            
-            if not found_trigger:
+            # 检查是否触发
+            triggered_word = self._check_trigger(event, trigger_words)
+            if not triggered_word:
                 return
             
             # 获取发送者用户名
@@ -411,21 +433,13 @@ class XYTUFunctionPlugin(Star):
                 return
             
             # 获取触发词列表
-            trigger_words = config.get("like_trigger_words", ["赞我", "点赞"])
+            trigger_words = config.get("like_trigger_words", ["赞我", "zanwo"])
             if not trigger_words:
-                trigger_words = ["赞我", "点赞"]
+                trigger_words = ["赞我", "zanwo"]
             
-            # 检查消息是否匹配触发词
-            message_str = event.message_str.strip().lower()
-            
-            # 将触发词也转换为小写进行比较
-            found_trigger = False
-            for word in trigger_words:
-                if word.lower() in message_str:
-                    found_trigger = True
-                    break
-            
-            if not found_trigger:
+            # 检查是否触发
+            triggered_word = self._check_trigger(event, trigger_words)
+            if not triggered_word:
                 return
             
             # 获取发送者用户名
