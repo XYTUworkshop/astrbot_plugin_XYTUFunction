@@ -1,9 +1,9 @@
 {
-  "wake_word": {
-    "description": "插件唤醒词",
-    "type": "string",
-    "default": "XYTU",
-    "hint": "设置唤醒词前缀 仅在本插件使用 无需配置文件唤醒词 如[XYTU 状态]可以直接触发功能 \n 注: 此处提示词不能与平台唤醒词相同"
+  "awake_words": {
+    "description": "唤醒词列表",
+    "type": "list",
+    "default": ["XYTU", "XYTUFT"],
+    "hint": "唤醒词 可输入平台配置中的唤醒词 使用[唤醒词+触发词]触发BOT回复"
   },
   "status_enabled": {
     "description": "状态功能开关",
