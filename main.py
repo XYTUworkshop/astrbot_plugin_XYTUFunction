@@ -11,42 +11,14 @@ import re
 import subprocess
 from typing import List
 
-@register("astrbot_plugin_XYTUFunction", "Tangzixy , Slime , SLserver , XYTUworkshop", "Astrbot基础功能插件？ 一个就够了！", "v0.3.1", "https://github.com/XYTUworkshop/astrbot_plugin_XYTUFunction")
+@register("astrbot_plugin_XYTUFunction", "Tangzixy , Slime , SLserver , XYTUworkshop", "Astrbot基础功能插件？ 一个就够了！", "v0.3.2", "https://github.com/XYTUworkshop/astrbot_plugin_XYTUFunction")
 class XYTUFunctionPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
         self.config = config
-        logger.info("XYTUFunction 插件初始化")
-        
-    def _check_trigger(self, event: AstrMessageEvent, trigger_words: List[str]) -> str:
-        """
-        检查是否触发功能
-        Args:
-            event: 消息事件
-            trigger_words: 触发词列表
-        Returns:
-            str: 如果触发返回触发词，否则返回空字符串
-        """
-        # 获取消息文本
-        message_str = event.message_str.strip()
-        
-        # 获取配置的唤醒词
-        wake_word = self.config.get("wake_word", "XYTU")
-        
-        # 检查消息是否以唤醒词开头
-        if not message_str.startswith(wake_word):
-            return ""
-        
-        # 支持唤醒词后跟空格的情况
-        remaining = message_str[len(wake_word):].strip()
-        
-        # 检查剩余部分是否完全匹配某个触发词
-        for word in trigger_words:
-            if remaining.lower() == word.lower():
-                return word
-        
-        # 如果没有匹配的触发词
-        return ""
+        # 获取配置中的唤醒词列表，默认为["XYTU", "XYTUFT"]
+        self.awake_words = config.get("awake_words", ["XYTU", "XYTUFT"])
+        logger.info(f"XYTUFunction 插件初始化，唤醒词: {self.awake_words}")
         
     # ========================================== 状态 ==========================================
     
@@ -361,6 +333,88 @@ class XYTUFunctionPlugin(Star):
             
             return False
     
+    def _get_raw_message(self, event: AstrMessageEvent) -> str:
+        """获取原始消息"""
+        try:
+            # 方法1: 从 message_obj.raw_message 获取
+            if hasattr(event, 'message_obj') and hasattr(event.message_obj, 'raw_message'):
+                if isinstance(event.message_obj.raw_message, str):
+                    return event.message_obj.raw_message
+                elif hasattr(event.message_obj.raw_message, '__str__'):
+                    # 尝试转换为字符串
+                    raw_str = str(event.message_obj.raw_message)
+                    # 如果 raw_str 看起来像是一个对象表示，尝试从中提取消息内容
+                    # 从日志看，raw_message 是一个类似 <Event, {...}> 的字符串
+                    # 我们需要从中提取 'raw_message' 字段
+                    if "'raw_message':" in raw_str:
+                        # 尝试提取 raw_message 字段的值
+                        try:
+                            # 找到 'raw_message': 的位置
+                            start = raw_str.find("'raw_message':") + len("'raw_message':")
+                            # 找到下一个逗号或右大括号
+                            end = raw_str.find(",", start)
+                            if end == -1:
+                                end = raw_str.find("}", start)
+                            if end != -1:
+                                raw_msg = raw_str[start:end].strip()
+                                # 去除可能的引号
+                                if raw_msg.startswith("'") and raw_msg.endswith("'"):
+                                    raw_msg = raw_msg[1:-1]
+                                elif raw_msg.startswith('"') and raw_msg.endswith('"'):
+                                    raw_msg = raw_msg[1:-1]
+                                return raw_msg
+                        except:
+                            pass
+                    return raw_str
+            
+            # 方法2: 直接尝试获取原始消息
+            if hasattr(event, 'raw_message'):
+                return str(event.raw_message)
+            
+            # 方法3: 回退到 message_str
+            return event.message_str
+            
+        except Exception as e:
+            logger.error(f"获取原始消息失败: {e}")
+            return ""
+    
+    def _check_awake_and_trigger(self, event: AstrMessageEvent, trigger_words: List[str]) -> bool:
+        """
+        检查是否被唤醒并且消息匹配触发词
+        
+        规则:
+        1. 原始消息以配置中的任一唤醒词开头
+        2. 唤醒词之后的部分严格匹配触发词
+        """
+        try:
+            # 获取原始消息
+            raw_msg = self._get_raw_message(event)
+            
+            # 如果没有获取到原始消息，则回退到 message_str
+            if not raw_msg:
+                raw_msg = event.message_str
+            
+            # 记录调试信息
+            logger.info(f"原始消息内容: '{raw_msg}'，唤醒词列表: {self.awake_words}")
+            
+            # 检查原始消息是否以配置中的任一唤醒词开头
+            for awake_word in self.awake_words:
+                if raw_msg.startswith(awake_word):
+                    # 移除唤醒词和可能跟随的空格
+                    remaining = raw_msg[len(awake_word):].strip()
+                    
+                    # 检查剩余部分是否严格匹配触发词
+                    for word in trigger_words:
+                        if remaining.lower() == word.lower():
+                            logger.info(f"匹配成功: 唤醒词='{awake_word}', 触发词='{word}'")
+                            return True
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"检查唤醒和触发失败: {e}")
+            return False
+    
     # ============== 消息处理函数 ==============
     
     @filter.event_message_type(filter.EventMessageType.ALL)
@@ -379,9 +433,8 @@ class XYTUFunctionPlugin(Star):
             if not trigger_words:
                 trigger_words = ["状态", "status"]
             
-            # 检查是否触发
-            triggered_word = self._check_trigger(event, trigger_words)
-            if not triggered_word:
+            # 检查是否应该触发（必须被唤醒且匹配触发词）
+            if not self._check_awake_and_trigger(event, trigger_words):
                 return
             
             # 获取发送者用户名
@@ -437,9 +490,8 @@ class XYTUFunctionPlugin(Star):
             if not trigger_words:
                 trigger_words = ["赞我", "zanwo"]
             
-            # 检查是否触发
-            triggered_word = self._check_trigger(event, trigger_words)
-            if not triggered_word:
+            # 检查是否应该触发（必须被唤醒且匹配触发词）
+            if not self._check_awake_and_trigger(event, trigger_words):
                 return
             
             # 获取发送者用户名
