@@ -1,4 +1,10 @@
 {
+  "wake_word": {
+    "description": "插件唤醒词",
+    "type": "string",
+    "default": "XYTU",
+    "hint": "设置唤醒词前缀 仅在本插件使用 无需配置文件唤醒词 如[XYTU 状态]可以直接触发功能"
+  },
   "status_enabled": {
     "description": "状态功能开关",
     "type": "bool",
@@ -9,7 +15,7 @@
     "description": "状态功能触发词",
     "type": "list",
     "default": ["状态", "status"],
-    "hint": "用户发送这些词时触发状态回复，无需包含唤醒词前缀。"
+    "hint": "用户发送这些词时触发状态回复 需要配合唤醒词使用"
   },
   "like_enabled": {
     "description": "赞我功能开关",
@@ -21,6 +27,6 @@
     "description": "赞我功能触发词",
     "type": "list",
     "default": ["赞我", "zanwo"],
-    "hint": "用户发送这些词时触发点赞功能，无需包含唤醒词前缀。"
+    "hint": "用户发送这些词时触发点赞功能 需要配合唤醒词使用"
   }
 }
