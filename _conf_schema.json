@@ -3,7 +3,7 @@
     "description": "插件唤醒词",
     "type": "string",
     "default": "XYTU",
-    "hint": "设置唤醒词前缀 仅在本插件使用 无需配置文件唤醒词 如[XYTU 状态]可以直接触发功能"
+    "hint": "设置唤醒词前缀 仅在本插件使用 无需配置文件唤醒词 如[XYTU 状态]可以直接触发功能 \n 注: 此处提示词不能与平台唤醒词相同"
   },
   "status_enabled": {
     "description": "状态功能开关",
