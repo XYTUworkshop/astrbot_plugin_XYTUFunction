@@ -3,7 +3,13 @@
     "description": "唤醒词列表",
     "type": "list",
     "default": ["XYTU", "XYTUFT"],
-    "hint": "唤醒词 可输入平台配置中的唤醒词 使用[唤醒词+触发词]触发BOT回复"
+    "hint": "机器人响应前需要使用的唤醒词 每行一个词 [输入'唤醒词 触发词'才能触发状态功能]"
+  },
+  "recall_prevention_enabled": {
+    "description": "撤回防回复开关",
+    "type": "bool",
+    "default": false,
+    "hint": "当LLM思考完成前如果发现原问题被撤回 则不回复该问题"
   },
   "status_enabled": {
     "description": "状态功能开关",
