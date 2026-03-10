@@ -31,8 +31,9 @@
     py-cpuinfo>=9.0.0  
   ###   测试环境
     Win10Pro 22H2 19045.6466  
-    Astrbot v4.12.1  
-    Napcat  v4.9.81  
+    Python 3.13.5  
+    Astrbot v4.19.2  
+    Napcat  v4.17.46  
   
   遇到bug请反馈  
   
