@@ -41,4 +41,6 @@
 - [XYTUworkshop官网](https://www.xytuws.cn)  
 - [SLserver官网](https://www.slimeserver.top)  
 - [Tangzixy](https://tangzixy.top)  
-- [Slime](https://slimeserver.top)  
+- [Slime](https://slimeserver.top)
+
+- 同时呢 欢迎加入我们的[QQ群反馈问题](https://qm.qq.com/q/tIU1ydMK3Y)
