@@ -51,10 +51,10 @@ openai协议api余额查询
   ###   测试环境
     Win10Pro 22H2 19045.6466  
     Python 3.13.5  
-    Astrbot v4.19.2  
-    Napcat  v4.17.46  
+    Astrbot windows最新版  
+    Napcat  windows最新版  
   
-  遇到bug请反馈  
+  遇到bug请在lssues反馈  
   
 # XYTU & 相关作者
   
